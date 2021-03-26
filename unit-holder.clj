@@ -6,6 +6,7 @@
 ;;demands to DemandRecords.
 (ns unit-holder
   (:require [proc.demandanalysis :as analyzer]
+            [proc.supply :as supply]
             [spork.util [io :as io] [table :as tbl]]))
 
 (defn sum-demands
@@ -47,6 +48,7 @@
   to stop the peak hold demand (end-day can be manual for now)."
   [demands-records supply-map demands start-day end-day]
   (let [;InitialDefeat = (AOR+FORGE+OffFORGE)
+        ;;will need to make sure inventories aren't nil
         ;LeftoverQuantity= RCSupply + ACSupply - NumRCCannibalized -
                                         ;HLD - InitialDefeat
         ;PeakDefeat =(AOR+FORGE+OffFORGE)
@@ -62,3 +64,18 @@
            ;;records with the original demand recrods
            forge-demands]
   )))
+
+(defn make-demands-from
+  "Given the path to a workbook containing DemandRecords and
+  SupplyRecords, return new DemandRecords with added demand used to
+  hold units for the demand at end-day."
+  [wkbk-path demands start-day end-day]
+  (let [demand (util/enabled-demand wkbk-path)
+        demand-by-src (group-by :SRC demand)
+        ;map of "SRC" to {"AC" int, "NG" int, "RC" int}
+        supply-map (supply/quants-by-compo wkbk-p)]
+    (reduce concat
+            (for [[src demand-records] demand-by-src]
+              (make-demands demands-records (supply-map src)
+                            demands start-day end-day)))))
+      
