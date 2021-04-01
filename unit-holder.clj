@@ -7,6 +7,7 @@
 (ns unit-holder
   (:require [proc.demandanalysis :as analyzer]
             [proc.supply :as supply]
+            [proc.util :as util]
             [spork.util [io :as io] [table :as tbl]]))
 
 (defn sum-demands
@@ -88,7 +89,7 @@
   Forge is the only demand type that steps up, so we will decrease the
   hold demand every time that increases.  The forge demand name is a
   string for forge-name."
-  [demands-records supply-map demands forge-name start-day end-day]
+  [demand-records supply-map demands forge-name start-day end-day]
   (let [;;the number of units currently held for the main demand
            init-demand (init-hold demand-records supply-map demands
                                   start-day end-day)
@@ -176,9 +177,9 @@
   (let [demand (util/enabled-demand wkbk-path)
         demand-by-src (group-by :SRC demand)
         ;map of "SRC" to {"AC" int, "NG" int, "RC" int}
-        supply-map (supply/quants-by-compo wkbk-p)]
+        supply-map (supply/quants-by-compo wkbk-path)]
     (reduce concat
             (for [[src demand-records] demand-by-src]
-              (make-demands demands-records (supply-map src)
+              (make-demands demand-records (supply-map src)
                             demands start-day end-day)))))
       
