@@ -39,6 +39,8 @@
 (def start 722)
 (def end 754)
 
+;;second has one that's not in the first.  everything in the first is
+;;in the second.
 (deftest one-hold
   (is (= (set (remove-index (make-demands-from wkbk-p demands forge-name start end)))
          (set (remove-index (util/enabled-demand out-p))))))

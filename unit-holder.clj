@@ -116,6 +116,7 @@
                               (sort-by :StartDay)
                               ((fn [recs] (check-forge recs
                                                        end-day))))
+        _ (println forge-demands)
         ;;used to set the src of the hold demands
         src (:SRC (first demand-records))
         title (:OITitle (first demand-records))]
@@ -126,6 +127,7 @@
              ;;quantity change.
              curr-forge (sum-demands demand-records [forge-name]
                                      start-day)
+             
              ;;a hold record that holds the start day of another peak
              ;;hold demand. When a change in forge quantity is
              ;;detected or we have come to the end day of the hold
@@ -147,9 +149,12 @@
                               (rest forge-demands))
                               
              ]
+        (println "curr-forge: " curr-forge)
         (cond (or (empty? leftover-forge)
                   ;;could happen with low forge demand.
-                  (<= (:Quantity curr-hold-rec)))
+                  ;;huh?
+                  ;;(<= (:Quantity curr-hold-rec))
+                  )
               (concat demand-records (add-info hold-demands src title))
 
               ;;no quantity change
@@ -178,7 +183,7 @@
                                                              leftover-forge))
                                                              (:StartDay
                                                               curr-hold-rec))))
-                     (check-forge (rest (leftover-forge)) end-day))
+                     (check-forge (rest leftover-forge) end-day))
               ;;we shouldn't get here.
               :else
               (throw (Exception. "A case should have matched.")))))))
