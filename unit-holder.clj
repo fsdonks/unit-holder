@@ -8,7 +8,8 @@
   (:require [proc.demandanalysis :as analyzer]
             [proc.supply :as supply]
             [proc.util :as util]
-            [spork.util [io :as io] [table :as tbl]]))
+            [spork.util [io :as io] [table :as tbl]]
+            [marathon.project.excel :as xl]))
 
 
 (defn sum-demands
@@ -102,7 +103,7 @@
   (let [;;the number of units currently held for the main demand
            init-demand (init-hold demand-records supply-map demands
                                   start-day end-day)
-        _ (println init-demand)
+        _ (println "init-demand=" init-demand)
         ;;every time forge quantity increases, decrease the peak
            ;;hold demand. If this is the last forge-demand with an
            ;;end day of end-day, then stop and concat the peak hold
@@ -116,7 +117,6 @@
                               (sort-by :StartDay)
                               ((fn [recs] (check-forge recs
                                                        end-day))))
-        _ (println forge-demands)
         ;;used to set the src of the hold demands
         src (:SRC (first demand-records))
         title (:OITitle (first demand-records))]
@@ -187,13 +187,20 @@
               ;;we shouldn't get here.
               :else
               (throw (Exception. "A case should have matched.")))))))
-                                          
+
+(defn enabled-demand
+  "Parse the DemandRecords from an Excel workbook just like we do for
+  MARATHON and only keep the enabled records."
+  [wkbk-path]
+  (filter (fn [r] (:Enabled r)) (tbl/table-records (:DemandRecords
+                      (xl/marathon-book->marathon-tables wkbk-path)))))
+
 (defn make-demands-from
   "Given the path to a workbook containing DemandRecords and
   SupplyRecords, return new DemandRecords with added demand used to
   hold units for the demand at end-day."
   [wkbk-path demands forge-name start-day end-day]
-  (let [demand (util/enabled-records wkbk-path "DemandRecords")
+  (let [demand (enabled-demand wkbk-path)
         demand-by-src (group-by :SRC demand)
         ;map of "SRC" to {"AC" int, "NG" int, "RC" int}
         supply-map (supply/quants-by-compo wkbk-path)]
