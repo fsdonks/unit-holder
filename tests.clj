@@ -4,7 +4,7 @@
 (ns unit-holder)
 (use 'clojure.test)
 ;;location containing all of the excel test files
-(def test-root "/home/craig/runs/peak_hold/")
+(def root "/home/craig/runs/peak_hold/")
 
 (defn get-hold-demands
   "filters demand records for the hold demands."
@@ -18,21 +18,24 @@
   [recs]
   (for [r recs] (dissoc r :DemandIndex (keyword "Title 10_32"))))
 
+(defn find-inputs "Given test in string and out-string, make the paths for the in-file
+  and out-files."
+  [in-string out-string]
+    [(str root "peak_hold_test-" in-string "-" "input.xlsx")
+     (str root "peak_hold_test-" out-string "-" "output.xlsx")])
+
   ;;given a path to an input workbook with supply and demand, a path to
   ;;an output workbook with demand, and a vector of remaining arguments
   ;;to make-demand-from, check to see if the resulting records from make-demands-from called with
   ;;the input path and arguments equals the set of records in the output
   ;;workbook.
-
-(def wkbk-p (str root "peak_hold_test-2-input.xlsx"))
-(def out-p (str root "peak_hold_test-2-output.xlsx"))
-(def demands ["Moke"])
-(def forge-name "Moke")
-(def start 722)
-(def end 754)
-
-(deftest one-hold
-  (is (= (set (remove-index (make-demands-from wkbk-p demands forge-name start end)))
-         (set (remove-index (enabled-demand out-p))))))
+(with-test
+  (defn outputs=? [[in-file out-file] {:keys [demands forge-name start end]}]
+      (= (set (remove-index (make-demands-from in-file demands forge-name start end)))
+         (set (remove-index (enabled-demand out-file)))))
+  (let [args-0 {:demands ["Moke"] :forge-name "Moke" :start 722 :end 754}]
+    (is (outputs=? (find-inputs 2 2) args-0))
+    )
+  )
 
 (run-tests 'unit-holder)
