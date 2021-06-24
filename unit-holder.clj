@@ -27,32 +27,22 @@
 (defn init-hold
   "Compute the number of initial units to hold."
   [demand-records supply-map demands start-day end-day]
-  (let [;InitialDefeat = (AOR+FORGE+OffFORGE)
-        ;The sum of the quantity from all demands in demands at the
-                                        ;start day.
+  (let [;;priority demand combined quantity on the start day
         init-demands (sum-demands demand-records demands start-day)
                                         ;pull inventories from the map
         ;these inventories will be 0 if they don't exist.
         [total NG RC AC] (supply/return-inv supply-map)
-        num-cannibalized (sum-demands demand-records ["RC_NonBOG-War"]
-                                      start-day)
-        num-hld (sum-demands demand-records ["HLD"] start-day)
-        ;LeftoverQuantity= RCSupply + ACSupply - NumRCCannibalized -
-                                        ;HLD - InitialDefeat
         leftovers (- (+ (+ NG RC) AC)
-                     num-cannibalized
-                     num-hld
+                     ;;highest priority on the start day
                      init-demands)
-                                        ;PeakDefeat =(AOR+FORGE+OffFORGE)
         ;The sum of the quantity from all demands in demands at the
         ;end day.
         end-demands (sum-demands demand-records demands end-day)
         ]
-    ;PeakHold = If (LeftoverQuantity>0) Min(LeftoverQuantity,
-                                        ;PeakDefeat)
-    ;;might be negative or 0
-      (min leftovers end-demands)
-    ))
+    ;;leftovers might be negative or 0
+      (min leftovers (- end-demands init-demands))
+      ))
+
 (def hold-record
 {:DemandGroup "peak_hold"
  :SRC :text,
@@ -86,6 +76,16 @@
   (if (empty? recs)
     recs
     (map (fn [r] (assoc r :SRC src :OITitle title)) recs)))
+
+;;Assumptions:
+;;1)end of peak hold is on a forge demand start day (hence the > in check-forge)
+;;2)For now, assume that the FORGE demand is the only one increasing
+;;over time until the day of the end of peak hold, so whenever the FORGE quantity
+;;increases, the peak hold demand quantity decreases.  well, this
+;;should really be a grouping of highest priority demands.
+
+;;Note that this may work if one of the priority demands decreases as
+;;well, but that hasn't been tested.
 
 (defn make-demands
   "This function creates the actual demand records to hold a number of
