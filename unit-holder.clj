@@ -1,9 +1,20 @@
-;;This namespace is intended to be loaded from proc.
+;;This namespace is intended to be loaded from the MARATHON repl.
 ;;The purpose of this namespace is to set aside units at the beginning
 ;;of conflict so that they can deploy to a specified set of demands as
 ;;those demands build over time.
 ;;At this time, the simplest approach seems to be to just add hold
 ;;demands to DemandRecords.
+
+;;example invocation from the MARATHON repl:
+(comment
+  (load-file "/home/craig/workspace/unit-holder/unit-holder.clj")
+;;The rest of this is just to run tests if you want.
+(ns unit-holder)
+;;location containing all of the excel test files
+(def root "/home/craig/workspace/unit-holder/test-data/")
+(load-file "/home/craig/workspace/unit-holder/tests.clj")
+)
+
 (ns unit-holder
   (:require [proc.demandanalysis :as analyzer]
             [proc.supply :as supply]
@@ -219,6 +230,8 @@
   (filter (fn [r] (:Enabled r)) (tbl/table-records (:DemandRecords
                       (xl/marathon-book->marathon-tables wkbk-path)))))
 
+;;Need to see if we can use this out of the box for a DemandRecords
+;;transform in m4.
 (defn make-demands-from
   "Given the path to a workbook containing DemandRecords and
   SupplyRecords, return new DemandRecords with added demand used to

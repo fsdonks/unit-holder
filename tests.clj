@@ -3,8 +3,6 @@
 
 (ns unit-holder)
 (use 'clojure.test)
-;;location containing all of the excel test files
-(def root "/home/craig/runs/peak_hold/")
 
 (defn get-hold-demands
   "filters demand records for the hold demands."
@@ -18,11 +16,16 @@
   [recs]
   (for [r recs] (dissoc r :DemandIndex (keyword "Title 10_32"))))
 
+(defn get-file "Specify the name of a test to find with the standard
+  extension and pre-text."
+  [test-name]
+  (str root "peak_hold_test-" test-name ".xlsx"))
+
 (defn find-inputs "Given test in string and out-string, make the paths for the in-file
   and out-files."
   [in-string out-string]
-    [(str root "peak_hold_test-" in-string "-" "input.xlsx")
-     (str root "peak_hold_test-" out-string "-" "output.xlsx")])
+  [(get-file (str in-string "-input"))
+   (get-file (str out-string "-output"))])
 
   ;;given a path to an input workbook with supply and demand, a path to
   ;;an output workbook with demand, and a vector of remaining arguments
@@ -48,8 +51,11 @@ initial demand should still be 3."
       (is (outputs=? (find-inputs 2 2)
                      (assoc args-0 :demands (conj (:demands args-0)
                                                   "OffFORGE"))))
-          
       )
+    (testing "Testing the first change in quantity, so we should have
+    two peak hold records here."
+      (is (outputs=? [(get-file "2-input") (get-file "3-output")]
+                     (assoc args-0 :end 778))))
     )
   )
 
