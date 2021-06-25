@@ -77,16 +77,22 @@
     recs
     (map (fn [r] (assoc r :SRC src :OITitle title)) recs)))
 
+(defn new-hold-records
+  "We have encountered a change in the quantity of the priority demand
+  groups, so we take whatever the current hold record looks like, and
+  update the start day and quantity according to the record indicating
+  the change in quantity."
+  [])
+
 ;;Assumptions:
 ;;1)end of peak hold is on a forge demand start day (hence the > in check-forge)
-;;2)For now, assume that the FORGE demand is the only one increasing
-;;over time until the day of the end of peak hold, so whenever the FORGE quantity
-;;increases, the peak hold demand quantity decreases.  well, this
-;;should really be a grouping of highest priority demands.
+;;2)There are a grouping of highest priority demands.  So every time
+;;the quantity of that group increases, the quantity of peak hold
+;;decreases. Listing out the priority demands might be verbose as
+;;opposed to just specifying a target priority, but this is okay for now.
 
 ;;Note that this may work if one of the priority demands decreases as
-;;well, but that hasn't been tested.
-
+;;well, but that hasn't been tested.  For now, they're likely to only increase.
 (defn make-demands
   "This function creates the actual demand records to hold a number of
   units in order to meet the peak demand.  The results demand records
@@ -99,7 +105,7 @@
   Forge is the only demand type that steps up, so we will decrease the
   hold demand every time that increases.  The forge demand name is a
   string for forge-name."
-  [demand-records supply-map demands forge-name start-day end-day]
+  [demand-records supply-map demands start-day end-day]
   (let [;;the number of units currently held for the main demand
            init-demand (init-hold demand-records supply-map demands
                                   start-day end-day)
@@ -113,7 +119,13 @@
         ;;demand-group-key should be used here, too
         forge-demands (->> demand-records
                               (filter (fn [{:keys [DemandGroup]}]
-                                        (= DemandGroup forge-name)))
+                                        (contains? (set demands)
+                                                   DemandGroup)))
+                              (analyzer/add-deltas)
+                              (map (fn [[day recs]]
+                                     (assoc (first recs)
+                                                   :Quantity
+                                                   (apply + (map #(:Quantity %) recs)))))
                               (sort-by :StartDay)
                               ((fn [recs] (check-forge recs
                                                        end-day))))
@@ -125,7 +137,7 @@
       demand-records
       (loop [;;what is the current forge demand.  Will use to detect
              ;;quantity change.
-             curr-forge (sum-demands demand-records [forge-name]
+             curr-forge (sum-demands demand-records demands
                                      start-day)
              
              ;;a hold record that holds the start day of another peak
@@ -150,6 +162,7 @@
                               
              ]
         (println "curr-forge: " curr-forge)
+        (println "new quantity: " (:Quantity (first leftover-forge)))
         (cond (or (empty? leftover-forge)
                   ;;could happen with low forge demand.
                   ;;huh?
@@ -158,23 +171,25 @@
               (concat demand-records (add-info hold-demands src title))
 
               ;;no quantity change
-              (= (:Quantity (first leftover-forge)) curr-forge)
+              (= (:Quantity (first leftover-forge)) 0)
               (recur curr-forge curr-hold-rec hold-demands
                      (check-forge (rest
                                    leftover-forge)  end-day))
               ;;new quantity          
-              (not= (:Quantity (first leftover-forge)) curr-forge)
+              (not= (:Quantity (first leftover-forge)) 0)
               ;;change current forge
-              (recur (:Quantity (first leftover-forge))
+              (recur (+ curr-forge (:Quantity (first leftover-forge)))
                      ;;start a new curr-hold-rec with a start day based on the
                      ;;new forge record
                      (assoc curr-hold-rec :StartDay (:StartDay (first
                                                                 leftover-forge))
                             ;;and a quantity that is reduced by how
                             ;;much the forge demand increased.
+                            ;;Need to move this to another function
+                            ;;and assert that quantity is never negative.
                             :Quantity (- (:Quantity curr-hold-rec)
-                                         (- (:Quantity (first
-                                                        leftover-forge)) curr-forge)))
+                                         (:Quantity (first
+                                                        leftover-forge))))
                      ;;add the new record to our collection of
                      ;;hold-demands and update the duration
                      (conj hold-demands (assoc curr-hold-rec
@@ -199,7 +214,7 @@
   "Given the path to a workbook containing DemandRecords and
   SupplyRecords, return new DemandRecords with added demand used to
   hold units for the demand at end-day."
-  [wkbk-path demands forge-name start-day end-day]
+  [wkbk-path demands start-day end-day]
   (let [demand (enabled-demand wkbk-path)
         demand-by-src (group-by :SRC demand)
         ;map of "SRC" to {"AC" int, "NG" int, "RC" int}
@@ -207,5 +222,5 @@
     (reduce concat
             (for [[src demand-records] demand-by-src]
               (make-demands demand-records (supply-map src)
-                            demands forge-name start-day end-day)))))
+                            demands start-day end-day)))))
       
