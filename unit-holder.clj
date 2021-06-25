@@ -77,12 +77,22 @@
     recs
     (map (fn [r] (assoc r :SRC src :OITitle title)) recs)))
 
-(defn new-hold-records
+(defn new-hold-record
   "We have encountered a change in the quantity of the priority demand
   groups, so we take whatever the current hold record looks like, and
   update the start day and quantity according to the record indicating
   the change in quantity."
-  [])
+  [curr-hold-rec delta-rec]
+  (let [;;quantity that is reduced by how
+        ;;much the quantity of the priority demand
+        ;;group increased.
+        new-quantity (- (:Quantity curr-hold-rec)
+                        (:Quantity delta-rec))]                           
+        ;;Allow quantity to be non-positive.  It just won't be added
+        ;;to the collection of hold-demands in make-demands.
+    (assoc curr-hold-rec :StartDay (:StartDay delta-rec)
+           :Quantity new-quantity)))
+        
 
 ;;Assumptions:
 ;;1)end of peak hold is on a forge demand start day (hence the > in check-forge)
@@ -181,23 +191,22 @@
               (recur (+ curr-forge (:Quantity (first leftover-forge)))
                      ;;start a new curr-hold-rec with a start day based on the
                      ;;new forge record
-                     (assoc curr-hold-rec :StartDay (:StartDay (first
-                                                                leftover-forge))
-                            ;;and a quantity that is reduced by how
-                            ;;much the forge demand increased.
-                            ;;Need to move this to another function
-                            ;;and assert that quantity is never negative.
-                            :Quantity (- (:Quantity curr-hold-rec)
-                                         (:Quantity (first
-                                                        leftover-forge))))
+                     (new-hold-record curr-hold-rec (first leftover-forge))
                      ;;add the new record to our collection of
                      ;;hold-demands and update the duration
-                     (conj hold-demands (assoc curr-hold-rec
+                     ;;BUT don't add it if quantity of the
+                     ;;curr-hold-rec is non positive (like maybe the
+                     ;;quantity of the priority demand group increase
+                     ;;above what the quantity will be at the
+                     ;;specified end.
+                     (if (pos? (:Quantity curr-hold-rec))
+                       (conj hold-demands (assoc curr-hold-rec
                                                :Duration (- (:StartDay
                                                              (first
                                                              leftover-forge))
                                                              (:StartDay
                                                               curr-hold-rec))))
+                       hold-demands)
                      (check-forge (rest leftover-forge) end-day))
               ;;we shouldn't get here.
               :else
