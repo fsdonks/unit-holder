@@ -31,9 +31,18 @@
         sample (analyzer/peak-parts demand-records
                                     :periods [{:Name "time t"
                                                :FromDay t
-                                               :ToDay t}])]
-    ;Get all demand quantities from the sample and add them together.
-    (reduce + (filter identity (map (first sample) demands)))))
+                                               :ToDay t}])
+        _ (println "t: " t)
+        _ (println "first demand: " (first demand-records))
+        _ (println "sample: " (first sample))]
+    ;;Get all demand quantities
+    ;;from the sample and add them
+    ;;together.
+    (if (empty? sample)
+      0       ;none of the demands are active at time t
+     ;;at least one of the demands are active at time t
+      (reduce + (filter identity (map (first sample) demands)))
+      )))
    
 (defn init-hold
   "Compute the number of initial units to hold."
