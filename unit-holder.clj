@@ -5,6 +5,11 @@
 ;;At this time, the simplest approach seems to be to just add hold
 ;;demands to DemandRecords.
 
+;;Note that we limit the upper bound of peak hold based on supply, but I
+;;don't think that's necessary. It's okay if peak hold is greater than
+;;the number of units available. Still, this way is more precise so no
+;;need to change it.
+
 ;;example invocation from the MARATHON repl:
 (comment
   (load-file "/home/craig/workspace/unit-holder/unit-holder.clj")
@@ -118,7 +123,10 @@
         
 
 ;;Assumptions:
-;;1)end of peak hold is on a forge demand start day (hence the > in check-forge)
+;;1)end of peak hold is on a forge demand start day (hence the > in
+;;check-forge)
+;;This end day should be the first day that you want 0 peak hold
+;;demand and should be the day that you want to hold the units for.
 ;;2)There are a grouping of highest priority demands.  So every time
 ;;the quantity of that group increases, the quantity of peak hold
 ;;decreases. Listing out the priority demands might be verbose as

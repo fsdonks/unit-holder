@@ -14,7 +14,10 @@
   "remove DemandIndex from a collection of demand records since we
   don't care about it for testing purposes."
   [recs]
-  (for [r recs] (dissoc r :DemandIndex (keyword "Title 10_32"))))
+  (for [r recs] (dissoc r :DemandIndex
+                        (keyword "Title 10_32")
+                        :Title10_32
+                        :OriginalPriority)))
 
 (defn get-file "Specify the name of a test to find with the standard
   extension and pre-text."
@@ -65,6 +68,14 @@ now. Testing start-day isn't on the first FORGE day, but it is on a
 FORGE demand start day."
       (is (outputs=? [(get-file "4-input") (get-file "4-output")]
                      args-4)))
+    (testing "Just another random visually-verified case with a
+changing peak hold demand."
+      (is (outputs=? (find-inputs 5 5)
+                     args-4)))
+    (testing "Just a large-sized run with many SRCs to see if anything
+errors out since we got an error here previously."
+      (is (make-demands-from (str root "base-testdata-v7.xlsx")
+                              ["Hinny" "Moke"] 722 785)))
     ))
 
 (run-tests 'unit-holder)
