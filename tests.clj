@@ -43,6 +43,12 @@
                 :end 754}
         args-4 {:demands ["Moke" "Hinny"] :start 722
                 :end 785}]
+;;supply sum = 31 - 2 - 1 - 0 = 28
+;;end = 3, so we should hold 3 units
+;;which is what is printlning.
+;;what do we expect?  well, 2 units go to HLD, 1 gets cannibalized, and then we hold 3 for Moke.
+;;we also expect to have the 3 forge-demands records, which we have.
+;;curr-forge is 0 at the beginning, which we expect.
     (testing "A simple, unchanging peak hold demand should be generated."
       (is (outputs=? (find-inputs 2 2) args-0)))
     (testing "Doesn't end on a FORGE start day."
