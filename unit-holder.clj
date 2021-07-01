@@ -190,14 +190,8 @@
                               :Quantity
                               init-demand)
              hold-demands []
-             leftover-forge (if
-                                (= curr-forge 0)
-                              forge-demands
-                              ;;otherwise, we don't need to process
-                              ;;the first forge demand
-                              (rest forge-demands))
-                              
-             ]
+             ;;just a placeholder for now.  
+             leftover-forge forge-demands]
         (println "curr-forge: " curr-forge)
         (println "new quantity: " (:Quantity (first leftover-forge)))
         (println "first leftover: " (first leftover-forge))

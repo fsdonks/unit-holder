@@ -40,7 +40,8 @@
                 :end 754}
         args-4 {:demands ["Moke" "Hinny"] :start 722
                 :end 785}]
-    (is (outputs=? (find-inputs 2 2) args-0))
+    (testing "A simple, unchanging peak hold demand should be generated."
+      (is (outputs=? (find-inputs 2 2) args-0)))
     (testing "Doesn't end on a FORGE start day."
       ;;here, maybe we should extend the end day on the hold demand, but we dont.
       ;;Unlikely to happen, so leave it alone for now.
@@ -64,7 +65,6 @@ now. Testing start-day isn't on the first FORGE day, but it is on a
 FORGE demand start day."
       (is (outputs=? [(get-file "4-input") (get-file "4-output")]
                      args-4)))
-    )
-  )
+    ))
 
 (run-tests 'unit-holder)
