@@ -44,5 +44,9 @@
 (records->xlsx (str (io/fdir wkbk-path) "/peak-hold.xlsx") 
                "DemandRecords"
                demands-2)
-  
-;;;Copy previous MARATHON run file and put in new demand records
+
+;;todo: automate
+;;Copy previous MARATHON run file
+;;put in new demand records
+;;run capacity analysis
+

@@ -36,10 +36,7 @@
         sample (analyzer/peak-parts demand-records
                                     :periods [{:Name "time t"
                                                :FromDay t
-                                               :ToDay t}])
-        _ (println "t: " t)
-        _ (println "first demand: " (first demand-records))
-        _ (println "sample: " (first sample))]
+                                               :ToDay t}])]
     ;;Get all demand quantities
     ;;from the sample and add them
     ;;together.
@@ -150,7 +147,6 @@
   (let [;;the number of units currently held for the main demand
            init-demand (init-hold demand-records supply-map demands
                                   start-day end-day)
-        _ (println "init-demand=" init-demand)
         ;;every time forge quantity increases, decrease the peak
            ;;hold demand. If this is the last forge-demand with an
            ;;end day of end-day, then stop and concat the peak hold
@@ -171,7 +167,6 @@
                               ((fn [recs] (let [res (check-forge recs
                                                        start-day
                                                        end-day)]
-                                            (println "forges " res)
                                             res))))
         ;;used to set the src of the hold demands
         src (:SRC (first demand-records))
@@ -200,9 +195,6 @@
              hold-demands []
              ;;just a placeholder for now.  
              leftover-forge forge-demands]
-        (println "curr-forge: " curr-forge)
-        (println "new quantity: " (:Quantity (first leftover-forge)))
-        (println "first leftover: " (first leftover-forge))
         (cond (or (empty? leftover-forge)
                   ;;could happen with low forge demand.
                   ;;huh?
