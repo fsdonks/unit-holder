@@ -85,10 +85,13 @@
   "Given a sequence of forge demands and an end day, return an empty
   vector if the first forge demand starts on a day that is greater
   than the end day.  Else, returns all forge demands."
-  [forge-demands end-day]
-  (cond (empty? forge-demands) []
-        (> (:StartDay (first forge-demands)) end-day) []
-        :else forge-demands))
+  [forge-demands start-day end-day]
+  (let [;;only need the forge demands that are >= StartDay
+        rest-forges (filter (fn [r]  (> (:StartDay r) start-day))
+                            forge-demands)]
+  (cond (empty? rest-forges) []
+        (> (:StartDay (first rest-forges)) end-day) []
+        :else rest-forges)))
 
 (defn add-info
   "Add unique SRC and OITitle to the hold records"
@@ -157,8 +160,11 @@
                                                    :Quantity
                                                    (apply + (map #(:Quantity %) recs)))))
                               (sort-by :StartDay)
-                              ((fn [recs] (check-forge recs
-                                                       end-day))))
+                              ((fn [recs] (let [res (check-forge recs
+                                                       start-day
+                                                       end-day)]
+                                            (println "forges " res)
+                                            res))))
         ;;used to set the src of the hold demands
         src (:SRC (first demand-records))
         title (:OITitle (first demand-records))]
@@ -184,7 +190,8 @@
                               :Quantity
                               init-demand)
              hold-demands []
-             leftover-forge (if (= curr-forge 0)
+             leftover-forge (if
+                                (= curr-forge 0)
                               forge-demands
                               ;;otherwise, we don't need to process
                               ;;the first forge demand
@@ -193,6 +200,7 @@
              ]
         (println "curr-forge: " curr-forge)
         (println "new quantity: " (:Quantity (first leftover-forge)))
+        (println "first leftover: " (first leftover-forge))
         (cond (or (empty? leftover-forge)
                   ;;could happen with low forge demand.
                   ;;huh?
@@ -204,7 +212,7 @@
               (= (:Quantity (first leftover-forge)) 0)
               (recur curr-forge curr-hold-rec hold-demands
                      (check-forge (rest
-                                   leftover-forge)  end-day))
+                                   leftover-forge)  start-day end-day))
               ;;new quantity          
               (not= (:Quantity (first leftover-forge)) 0)
               ;;change current forge
@@ -227,7 +235,7 @@
                                                              (:StartDay
                                                               curr-hold-rec))))
                        hold-demands)
-                     (check-forge (rest leftover-forge) end-day))
+                     (check-forge (rest leftover-forge) start-day end-day))
               ;;we shouldn't get here.
               :else
               (throw (Exception. "A case should have matched.")))))))

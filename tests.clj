@@ -36,7 +36,10 @@
   (defn outputs=? [[in-file out-file] {:keys [demands start end]}]
       (= (set (remove-index (make-demands-from in-file demands start end)))
          (set (remove-index (enabled-demand out-file)))))
-  (let [args-0 {:demands ["Moke" "RC_NonBOG-War" "HLD"] :start 722 :end 754}]
+  (let [args-0 {:demands ["Moke" "RC_NonBOG-War" "HLD"] :start 722
+                :end 754}
+        args-4 {:demands ["Moke" "Hinny"] :start 722
+                :end 785}]
     (is (outputs=? (find-inputs 2 2) args-0))
     (testing "Doesn't end on a FORGE start day."
       ;;here, maybe we should extend the end day on the hold demand, but we dont.
@@ -56,6 +59,11 @@ initial demand should still be 3."
     two peak hold records here."
       (is (outputs=? [(get-file "2-input") (get-file "3-output")]
                      (assoc args-0 :end 778))))
+    (testing "Found a 0 quantity peak-hold test case that is passing
+now. Testing start-day isn't on the first FORGE day, but it is on a
+FORGE demand start day."
+      (is (outputs=? [(get-file "4-input") (get-file "4-output")]
+                     args-4)))
     )
   )
 
