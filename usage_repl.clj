@@ -24,7 +24,10 @@
 (require '[spork.util.io :as io])
 
 (defn records->xlsx [wbpath sheetname recs]
-  (spork-xl/table->xlsx wbpath sheetname (tbl/records->table recs)))
+  (->> (tbl/records->table recs)
+       (tbl/stringify-field-names)
+       (spork-xl/table->xlsx wbpath sheetname)
+       ))
 
 (in-ns 'spork.util.excel.docjure)
  (defn set-cell! [^Cell cell value]
