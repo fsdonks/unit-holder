@@ -23,9 +23,13 @@
 (require '[spork.util.excel.core :as spork-xl])
 (require '[spork.util.io :as io])
 
-(defn records->xlsx [wbpath sheetname recs]
+(defn records->string-name-table [recs]
   (->> (tbl/records->table recs)
        (tbl/stringify-field-names)
+  ))
+
+(defn records->xlsx [wbpath sheetname recs]
+  (->> (records->string-name-table recs)
        (spork-xl/table->xlsx wbpath sheetname)
        ))
 
@@ -50,3 +54,17 @@
 ;;put in new demand records
 ;;run capacity analysis
 
+(def new-path (str (io/fdir wkbk-path)
+                   "/m4-book-with-peak-hold.xlsx"))
+
+(-> (spork-xl/as-workbook wkbk-path)
+    (spork-xl/wb->tables)
+    (assoc "DemandRecords" (records->string-name-table demands-2))
+    ((fn [table-map] (spork-xl/tables->xlsx (str (io/fdir wkbk-path)
+                                        "/m4-book-with-peak-hold.xlsx") table-map)))
+    )
+
+(require '[marathon.core :as m4-core])
+
+
+;(m4-core/capacity-analysis new-path)
